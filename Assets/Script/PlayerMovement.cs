@@ -6,10 +6,13 @@ public class PlayerMovement : MonoBehaviour
 {
     public float speed = 10f;
     Rigidbody2D rb;
+    Animator animator;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+
     }
 
     private void Update()
@@ -24,7 +27,11 @@ public class PlayerMovement : MonoBehaviour
         float inputY = Input.GetAxis("Vertical");
 
         Vector2 direction = new Vector2(inputX, inputY);
-
+        animator.SetFloat("Speed", direction.magnitude);
+        if(direction.magnitude > 1)
+        {
+            direction = direction.normalized;
+        }
         rb.velocity = direction * speed;
 
         // Vector3 playerNewPosition = transform.position;

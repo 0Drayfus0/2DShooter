@@ -10,10 +10,18 @@ public class Player : MonoBehaviour
     float _fireRate = 0.5f;
     float _nextFire;
 
+    Animator animator;
+
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+    }
+
     private void Update()
     {
         if (Input.GetButton("Fire1") && _nextFire <= 0)
         {
+            animator.SetTrigger("Shoot");
             Instantiate(bulletPref, pistol.transform.position, transform.rotation);
             _nextFire = _fireRate;
         }
