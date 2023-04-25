@@ -45,4 +45,9 @@ public class ZombiesMovement : MonoBehaviour
         Vector3 direction = zombiePosition - playerPosition;
         return direction;
     }
+
+    private void OnDisable()
+    {
+        rb.velocity = Vector2.zero;
+    }
 }
