@@ -4,14 +4,21 @@ using UnityEngine;
 
 public class Zombie : MonoBehaviour
 {
+    [Header ("Range")]
     [SerializeField]float attackRange = 5;
+    [SerializeField]float escapeRange = 25;
     [SerializeField]float movementRange = 15;
+
+    [Header("Statistics")]
+    public int health = 100;
+    public int damage = 10;
 
     ZombiesMovement movement;
 
     Animator animator;
     Player player;
     ZombieState activeState;
+    float distanceToPlayer;
 
 
     enum ZombieState
@@ -31,48 +38,77 @@ public class Zombie : MonoBehaviour
         player = FindObjectOfType<Player>();
         activeState = ZombieState.STAND;
     }
+    public void updateHealth(int amount)
+    {
+        health += amount;
+    }
 
     private void Update()
     {
-        float distance = Vector3.Distance(transform.position, player.transform.position);
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
         switch (activeState)
         {
             case ZombieState.STAND:
-                if(distance < movementRange)
-                {
-                    activeState = ZombieState.MOVE;
-                    return;
-                }
-                movement.enabled = false;
-                animator.SetFloat("Speed", 0);
+                DoStand(distanceToPlayer);
+
                 break;
 
             case ZombieState.MOVE:
-                if(distance < attackRange)
-                {
-                    activeState = ZombieState.ATTACK;
-                    return;
-                }
-                else if(distance > movementRange)
-                {
-                    activeState = ZombieState.STAND;
-                    return;
-                }
-                movement.enabled = true;
-                animator.SetFloat("Speed", 1);
-                break;
+                DoMove(distanceToPlayer);
 
-            case ZombieState.ATTACK:
-                if(distance > attackRange)
-                {
-                    activeState = ZombieState.MOVE;
-                    return;
-                }
-                movement.enabled = false;
-                animator.SetTrigger("Shoot");
                 break;
+                
+            case ZombieState.ATTACK:
+                DoAttack(distanceToPlayer);
+
+                break;     
         }
+    }
+    private void DoStand(float distance)
+    {
+        if (distance < movementRange)
+        {
+            activeState = ZombieState.MOVE;
+            return;
+        }
+        movement.enabled = false;
+        animator.SetFloat("Speed", 0);
+    }
+    private void DoMove(float distance)
+    {
+        if (distance < attackRange)
+        {
+            activeState = ZombieState.ATTACK;
+            return;
+        }
+        else if (distance > escapeRange)
+        {
+            activeState = ZombieState.STAND;
+            return;
+        }
+        movement.enabled = true;
+        animator.SetFloat("Speed", 1);
+    }
+    private void DoAttack(float distance)
+    {
+        if (distance > attackRange)
+        {
+            activeState = ZombieState.MOVE;
+            return;
+        }
+        movement.enabled = false;
+        animator.SetTrigger("Shoot");
+    }
+
+    public void DamageToPlayer()
+    {
+        if(distanceToPlayer > attackRange)
+        {
+            return;
+        }
+
+        player.updateHealth(-damage);
     }
 
     private void OnDrawGizmos()
@@ -82,5 +118,9 @@ public class Zombie : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, escapeRange);
+
     }
 }

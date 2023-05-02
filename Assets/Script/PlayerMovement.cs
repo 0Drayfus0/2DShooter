@@ -7,7 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 10f;
     Rigidbody2D rb;
     Animator animator;
-
+        
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -17,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        Move();
+        Move(); 
         Rotate();
     }
     private void Move()
