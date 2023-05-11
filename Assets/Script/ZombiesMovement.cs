@@ -7,7 +7,8 @@ public class ZombiesMovement : MonoBehaviour
     public float speed = 5f;
     Rigidbody2D rb;
     Animator animator;
-    Player player;
+    public Vector3 targetPosition;
+    
 
     private void Awake()
     {
@@ -15,10 +16,7 @@ public class ZombiesMovement : MonoBehaviour
         animator = GetComponent<Animator>();
 
     }
-    private void Start()
-    {
-        player = FindObjectOfType<Player>();
-    }
+   
     private void Update()
     {
         GetDirection();
@@ -32,6 +30,7 @@ public class ZombiesMovement : MonoBehaviour
         {
             direction = direction.normalized;
         }
+        animator.SetFloat("Speed", direction.magnitude);
         rb.velocity = -direction * speed;
     }
     private void Rotate(Vector3 direction)
@@ -41,8 +40,7 @@ public class ZombiesMovement : MonoBehaviour
     private Vector3 GetDirection()
     {
         Vector3 zombiePosition = transform.position;
-        Vector3 playerPosition = player.transform.position;
-        Vector3 direction = zombiePosition - playerPosition;
+        Vector3 direction = zombiePosition - targetPosition;
         return direction;
     }
 

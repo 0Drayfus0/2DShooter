@@ -1,30 +1,38 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Zombie : MonoBehaviour
 {
+    [Header("Param")]
+    [SerializeField] Animator animator;
+    [SerializeField] Player player;
+
     [Header ("Range")]
     [SerializeField]float attackRange = 5;
     [SerializeField]float escapeRange = 25;
     [SerializeField]float movementRange = 15;
 
     [Header("Statistics")]
+    public Slider slider;
     public int health = 100;
     public int damage = 10;
-
+   
+    ZombieState activeState;
     ZombiesMovement movement;
 
-    Animator animator;
-    Player player;
-    ZombieState activeState;
+    
     float distanceToPlayer;
+
+    Vector3 startPosition;
 
 
     enum ZombieState
     {
         STAND,
         MOVE,
+        RETURN,
         ATTACK
     }
 
@@ -36,68 +44,112 @@ public class Zombie : MonoBehaviour
     private void Start()
     {
         player = FindObjectOfType<Player>();
-        activeState = ZombieState.STAND;
+        ChageState(ZombieState.STAND);
+        slider.maxValue = health;
+        slider.value = health;
+        startPosition = transform.position;
     }
     public void updateHealth(int amount)
     {
         health += amount;
+        slider.value = health;
     }
 
     private void Update()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
         switch (activeState)
         {
             case ZombieState.STAND:
-                DoStand(distanceToPlayer);
+                DoStand();
 
+                break;
+            case ZombieState.RETURN:
+                DoReturn();
                 break;
 
             case ZombieState.MOVE:
-                DoMove(distanceToPlayer);
+                DoMove();
 
                 break;
                 
             case ZombieState.ATTACK:
-                DoAttack(distanceToPlayer);
+                DoAttack();
+                break;     
 
+        }
+    }
+    private void ChageState(ZombieState newState)
+    {
+        switch (newState)
+        {
+            case ZombieState.STAND:
+                movement.enabled = false;
+                break;
+
+            case ZombieState.RETURN:
+                movement.enabled = true;
+                movement.targetPosition = startPosition;
+                break;
+
+            case ZombieState.MOVE:
+                movement.enabled = true;
+                break;
+
+            case ZombieState.ATTACK:
+                movement.enabled = false;
                 break;     
         }
+
+        activeState = newState;
     }
-    private void DoStand(float distance)
+    private void DoStand()
     {
-        if (distance < movementRange)
+        if (distanceToPlayer < movementRange)
         {
-            activeState = ZombieState.MOVE;
+            ChageState(ZombieState.MOVE);
             return;
         }
-        movement.enabled = false;
-        animator.SetFloat("Speed", 0);
+
     }
-    private void DoMove(float distance)
+    private void DoReturn()
     {
-        if (distance < attackRange)
+        if (distanceToPlayer < movementRange)
         {
-            activeState = ZombieState.ATTACK;
+            ChageState(ZombieState.MOVE);
             return;
         }
-        else if (distance > escapeRange)
+
+        float distanceToStartPos = Vector3.Distance(startPosition, transform.position);
+        if(distanceToStartPos < 0.05f)
         {
-            activeState = ZombieState.STAND;
+            ChageState(ZombieState.STAND);
             return;
         }
-        movement.enabled = true;
-        animator.SetFloat("Speed", 1);
     }
-    private void DoAttack(float distance)
+   
+    private void DoMove()
     {
-        if (distance > attackRange)
+        if (distanceToPlayer < attackRange)
         {
-            activeState = ZombieState.MOVE;
+            ChageState(ZombieState.ATTACK);
             return;
         }
-        movement.enabled = false;
+        else if (distanceToPlayer > escapeRange)
+        {
+            ChageState(ZombieState.RETURN);
+            return;
+        }     
+        movement.targetPosition = player.transform.position;
+    }
+    private void DoAttack()
+    {
+        if (distanceToPlayer > attackRange)
+        {
+            ChageState(ZombieState.MOVE);
+            return;
+        }
         animator.SetTrigger("Shoot");
     }
 
@@ -107,7 +159,6 @@ public class Zombie : MonoBehaviour
         {
             return;
         }
-
         player.updateHealth(-damage);
     }
 

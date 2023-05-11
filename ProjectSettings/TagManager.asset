@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Zombie
   layers:
   - Default
   - TransparentFX
@@ -11,8 +12,8 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - Player
+  - Zombie
   - 
   - 
   - 
@@ -38,9 +39,18 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Groud
+    uniqueID: 2624264011
+    locked: 0
+  - name: Sand
+    uniqueID: 1552184669
+    locked: 0
   - name: Bullet
     uniqueID: 1032506335
     locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: New Layer 4
+    uniqueID: 1588370707
     locked: 0
