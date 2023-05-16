@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,6 +6,8 @@ using UnityEngine.UI;
 
 public class Zombie : MonoBehaviour
 {
+    public Action OnChangeHealth = delegate { };
+
     [Header("Param")]
     [SerializeField] Animator animator;
     [SerializeField] Player player;
@@ -13,11 +16,12 @@ public class Zombie : MonoBehaviour
     [SerializeField]float attackRange = 5;
     [SerializeField]float escapeRange = 25;
     [SerializeField]float movementRange = 15;
+    [SerializeField]public int viewAnge = 90;
 
     [Header("Statistics")]
-    public Slider slider;
     public int health = 100;
     public int damage = 10;
+    public bool death;
    
     ZombieState activeState;
     ZombiesMovement movement;
@@ -33,7 +37,8 @@ public class Zombie : MonoBehaviour
         STAND,
         MOVE,
         RETURN,
-        ATTACK
+        ATTACK,
+        DEATH
     }
 
     private void Awake()
@@ -45,14 +50,18 @@ public class Zombie : MonoBehaviour
     {
         player = FindObjectOfType<Player>();
         ChageState(ZombieState.STAND);
-        slider.maxValue = health;
-        slider.value = health;
         startPosition = transform.position;
     }
     public void updateHealth(int amount)
     {
         health += amount;
-        slider.value = health;
+        OnChangeHealth();
+
+        if(health <= 0)
+        {
+            death = true;
+            //
+        }
     }
 
     private void Update()
@@ -76,7 +85,11 @@ public class Zombie : MonoBehaviour
                 
             case ZombieState.ATTACK:
                 DoAttack();
-                break;     
+                break;
+
+            case ZombieState.DEATH:
+                DoDeath();
+                break;
 
         }
     }
@@ -99,19 +112,58 @@ public class Zombie : MonoBehaviour
 
             case ZombieState.ATTACK:
                 movement.enabled = false;
-                break;     
+                break;
+
+            case ZombieState.DEATH:
+                movement.enabled = false;
+                break;
         }
 
         activeState = newState;
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Bullet"))
+        {
+            Bullet bullet = collision.gameObject.GetComponent<Bullet>();
+            updateHealth(-bullet.damage);
+            Destroy(bullet.gameObject);
+        }
+    }
     private void DoStand()
     {
+        Vector3 directionToPlayer = player.transform.position - transform.position;
+        float angle = Vector3.Angle(-transform.up, directionToPlayer);
+        if(angle > viewAnge / 2)
+        {
+            return;
+        }
+
         if (distanceToPlayer < movementRange)
         {
             ChageState(ZombieState.MOVE);
             return;
         }
 
+
+        else if (death)
+        {
+            isDeath();
+            return;
+        }
+
+    }
+
+    private void isDeath()
+    {
+        ChageState(ZombieState.DEATH);
+
+    }
+
+    private void DoDeath()
+    {
+        animator.SetTrigger("Death");
     }
     private void DoReturn()
     {
@@ -127,6 +179,11 @@ public class Zombie : MonoBehaviour
             ChageState(ZombieState.STAND);
             return;
         }
+        else if (death)
+        {
+            isDeath();
+            return;
+        }
     }
    
     private void DoMove()
@@ -140,8 +197,14 @@ public class Zombie : MonoBehaviour
         {
             ChageState(ZombieState.RETURN);
             return;
-        }     
+        }
+        else if (death)
+        {
+            isDeath();
+            return;
+        }
         movement.targetPosition = player.transform.position;
+        
     }
     private void DoAttack()
     {
@@ -150,7 +213,13 @@ public class Zombie : MonoBehaviour
             ChageState(ZombieState.MOVE);
             return;
         }
+        else if (death)
+        {
+            isDeath();
+            return;
+        }
         animator.SetTrigger("Shoot");
+        
     }
 
     public void DamageToPlayer()
